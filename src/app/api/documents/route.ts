@@ -1,4 +1,3 @@
-// src/app/api/documents/route.ts
 import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth';
@@ -6,6 +5,9 @@ import { verifyAuthToken } from '@/lib/auth';
 const prisma = new PrismaClient();
 
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get('q')?.toLowerCase();
+
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -13,24 +15,36 @@ export async function GET(req: Request) {
 
   const token = authHeader.split(' ')[1];
   const { valid, decoded } = verifyAuthToken(token);
-
   if (!valid) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const userId = (decoded as {userId: string}).userId;
+  const userId = (decoded as { userId: string }).userId;
 
   const docs = await prisma.document.findMany({
     where: {
-      OR: [
-        { authorId: userId },
-        { isPublic: true },
-        { shares: { some: { userId } } },
+      AND: [
+        {
+          OR: [
+            { authorId: userId },
+            { isPublic: true },
+            { shares: { some: { userId } } },
+          ],
+        },
+        query
+          ? {
+              OR: [
+                { title: { contains: query, mode: 'insensitive' } },
+                { content: { contains: query, mode: 'insensitive' } },
+              ],
+            }
+          : {},
       ],
     },
     include: {
       author: { select: { email: true } },
     },
+    orderBy: { updatedAt: 'desc' },
   });
 
   return NextResponse.json({ documents: docs });
@@ -39,7 +53,6 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const authHeader = req.headers.get('authorization');
 
-  // ✅ Debug: check if auth header is received
   console.log('Auth Header:', authHeader);
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -48,13 +61,12 @@ export async function POST(req: Request) {
 
   const token = authHeader.split(' ')[1];
   const { valid, decoded } = verifyAuthToken(token);
-
   if (!valid) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
   const { title, content, isPublic } = await req.json();
-  const userId = (decoded as {userId: string}).userId;
+  const userId = (decoded as { userId: string }).userId;
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Missing title or content' }, { status: 400 });
