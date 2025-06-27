@@ -38,6 +38,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const authHeader = req.headers.get('authorization');
+
+  // ✅ Debug: check if auth header is received
+  console.log('Auth Header:', authHeader);
+
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
