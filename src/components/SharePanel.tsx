@@ -7,23 +7,31 @@ type Share = {
   canEdit: boolean;
 };
 
-export default function SharePanel({ documentId, token }: { documentId: string; token: string }) {
+export default function SharePanel({
+  documentId,
+  token,
+}: {
+  documentId: string;
+  token: string;
+}) {
   const [shares, setShares] = useState<Share[]>([]);
   const [email, setEmail] = useState('');
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchShares = async () => {
-    const res = await fetch(`/api/documents/${documentId}/share`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (res.ok) setShares(data.shares);
-  };
-
   useEffect(() => {
-    if (token) fetchShares();
-  }, [token]);
+    if (!token) return;
+
+    const fetchShares = async () => {
+      const res = await fetch(`/api/documents/${documentId}/share`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setShares(data.shares);
+    };
+
+    fetchShares();
+  }, [token, documentId]);
 
   const handleAdd = async () => {
     setLoading(true);
@@ -38,7 +46,12 @@ export default function SharePanel({ documentId, token }: { documentId: string; 
     if (res.ok) {
       setEmail('');
       setCanEdit(false);
-      fetchShares();
+      // Re-fetch shares after adding
+      const updatedRes = await fetch(`/api/documents/${documentId}/share`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updatedData = await updatedRes.json();
+      if (updatedRes.ok) setShares(updatedData.shares);
     } else {
       const data = await res.json();
       alert(data.error || 'Failed to share');
@@ -55,7 +68,14 @@ export default function SharePanel({ documentId, token }: { documentId: string; 
       },
       body: JSON.stringify({ email: targetEmail }),
     });
-    if (res.ok) fetchShares();
+    if (res.ok) {
+      // Re-fetch shares after removing
+      const updatedRes = await fetch(`/api/documents/${documentId}/share`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updatedData = await updatedRes.json();
+      if (updatedRes.ok) setShares(updatedData.shares);
+    }
   };
 
   return (
