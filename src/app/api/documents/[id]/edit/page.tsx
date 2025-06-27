@@ -36,7 +36,7 @@ export default function EditDocumentPage() {
     };
 
     fetchDoc();
-  }, [id, token]);
+  }, [id, token,router]);
 
   const handleSave = async () => {
     setSaving(true);

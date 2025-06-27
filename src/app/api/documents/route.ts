@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   }
 
   const { title, content, isPublic } = await req.json();
-  const userId = (decoded as any).userId;
+  const userId = (decoded as {userId: string}).userId;
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Missing title or content' }, { status: 400 });
