@@ -11,7 +11,7 @@ export default function EditDocumentPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('<p>Loading...</p>');
   const [isPublic, setIsPublic] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

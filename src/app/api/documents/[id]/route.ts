@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const token = req.headers.get('authorization')?.split(' ')[1];
-  const { valid, decoded } = verifyAuthToken(token || '');
+  const { valid } = verifyAuthToken(token || '');
 
   if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -26,7 +26,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { title, content, isPublic } = await req.json();
-  const userId = (decoded as any).userId;
+  const userId = (decoded as { userId: string }).userId;
 
   const doc = await prisma.document.findUnique({ where: { id: params.id } });
 

@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const userId = (decoded as any).userId;
+  const userId = (decoded as {userId: string}).userId;
 
   const docs = await prisma.document.findMany({
     where: {

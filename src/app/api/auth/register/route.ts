@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ message: 'User registered', user: { id: user.id, email: user.email } }, { status: 201 });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'User already exists or DB error' }, { status: 500 });
   }
 }

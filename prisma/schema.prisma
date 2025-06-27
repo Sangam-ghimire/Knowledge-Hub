@@ -50,8 +50,9 @@ model Mention {
 model Version {
   id         String   @id @default(cuid())
   content    String
+  editedAt   DateTime @default(now())
+  editorId   String
   document   Document @relation(fields: [documentId], references: [id])
   documentId String
-  editorId   String
-  editedAt   DateTime @default(now())
 }
+
