@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.10.1",
+    "@tiptap/extension-mention": "^2.23.0",
     "@tiptap/react": "^2.23.0",
     "@tiptap/starter-kit": "^2.23.0",
     "bcryptjs": "^3.0.2",
