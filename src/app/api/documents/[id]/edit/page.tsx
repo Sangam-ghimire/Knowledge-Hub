@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Editor from '@/components/Editor';
-import SharePanel from '@/components/SharePanel';
+
 
 type Version = {
   id: string;
@@ -113,10 +113,6 @@ export default function EditDocumentPage() {
       >
         {saving ? 'Saving...' : 'Save Changes'}
       </button>
-
-      {token && typeof id === 'string' && (
-        <SharePanel documentId={id} token={token} />
-      )}
 
       {/* Version History */}
       <div className="mt-8">
