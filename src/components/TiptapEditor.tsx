@@ -1,60 +1,65 @@
 'use client';
 
-import { EditorContent, useEditor } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Mention from '@tiptap/extension-mention';
 import { useEffect } from 'react';
 
-export default function TiptapEditor({
-  content,
-  onChange,
-}: {
-  content: string;
-  onChange: (html: string) => void;
-}) {
+type Props = {
+  initialContent: string;
+  documentId: string;
+  readOnly?: boolean;
+};
+
+export default function TiptapEditor({ initialContent, documentId, readOnly = false }: Props) {
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Mention.configure({
-        HTMLAttributes: {
-          class: 'text-blue-500 bg-blue-100 px-1 rounded',
-        },
-        suggestion: {
-          items: () => [], // Placeholder for mention suggestions
-          render: () => ({
-      onStart: () => {},
-      onUpdate: () => {},
-      onExit: () => {},
-    }),
-        },
-      }),
-    ],
-    content,
-    onUpdate({ editor }) {
-      onChange(editor.getHTML());
-    },
-    //  This line avoids SSR hydration issues
+    extensions: [StarterKit],
+    content: initialContent || '<p></p>', // fallback
+    editable: !readOnly,
     editorProps: {
       attributes: {
-        class: 'prose',
+        class: 'editor-content',
       },
     },
-    autofocus: true,
-    editable: true,
-    injectCSS: false,
-    immediatelyRender: false, 
+    onUpdate: async ({ editor }) => {
+      if (readOnly) return;
+
+      const html = editor.getHTML();
+      try {
+        await fetch(`/api/documents/${documentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ content: html }),
+        });
+      } catch (err) {
+        console.error('Failed to save document', err);
+      }
+    },
   });
 
-  // Sync editor content if the prop changes externally
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+    if (editor && readOnly !== undefined) {
+      editor.setEditable(!readOnly);
     }
-  }, [content, editor]);
+  }, [readOnly, editor]);
 
   return (
-    <div className="border p-2 rounded min-h-[300px]">
+    <div className="rounded border border-gray-700 bg-[#1a1a1a] p-4">
       <EditorContent editor={editor} />
+      <style jsx global>{`
+        .editor-content {
+          color: white;
+          background-color: #1a1a1a;
+          min-height: 200px;
+          outline: none;
+        }
+
+        .editor-content p {
+          margin: 0;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,21 +1,24 @@
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import type { FetchedDocumentData } from '@/types/document';
+import DocumentEditorClient from '@/components/DocumentEditorClient'; // new import
 
-export default async function DocumentPage(context: { params: { id: string } }) {
-  const cookieStore = await cookies(); // ✅ must be awaited
-  const token = cookieStore.get('token');
+export const dynamic = 'force-dynamic';
 
-  if (!token?.value) {
-    console.error('Missing token');
+export default async function DocumentPage({ params }: { params: { id: string } }) {
+  const cookieStore = await cookies(); // no `await` needed now
+  const tokenValue = cookieStore.get('token');
+
+  if (!tokenValue?.value) {
+    console.error('Missing token in cookies');
     return notFound();
   }
 
-  const docId = context.params.id; // ✅ access from context, not destructuring params
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-  const res = await fetch(`${baseUrl}/api/documents/${docId}`, {
+  const res = await fetch(`${baseUrl}/api/documents/${params.id}`, {
     headers: {
-      Authorization: `Bearer ${token.value}`,
+      Authorization: `Bearer ${tokenValue.value}`,
     },
     cache: 'no-store',
   });
@@ -26,7 +29,7 @@ export default async function DocumentPage(context: { params: { id: string } }) 
     return notFound();
   }
 
-  let data;
+  let data: FetchedDocumentData;
   try {
     data = await res.json();
   } catch (err) {
@@ -34,21 +37,29 @@ export default async function DocumentPage(context: { params: { id: string } }) 
     return notFound();
   }
 
-  const { document } = data;
+  const { document, currentUserId } = data;
+
   if (!document) {
-    console.error('Document missing from response');
+    console.error('Document not found in API response');
     return notFound();
   }
+
+  const isAuthor = document.author?.id === currentUserId;
+  const isSharedEditable = document.shares?.some((s) => s.userId === currentUserId && s.canEdit);
+  const canEdit = isAuthor || isSharedEditable;
 
   return (
     <main className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">{document.title}</h1>
       <p className="text-sm text-gray-500 mb-4">
-        By {document.author?.email} • Updated {new Date(document.updatedAt).toLocaleString()}
+        By {document.author?.email || 'Unknown'} • Updated{' '}
+        {new Date(document.updatedAt).toLocaleString()}
       </p>
-      <div
-        className="prose"
-        dangerouslySetInnerHTML={{ __html: document.content }}
+
+      <DocumentEditorClient
+        content={document.content}
+        documentId={document.id}
+        readOnly={!canEdit}
       />
     </main>
   );
