@@ -1,8 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), { ssr: false });
+import { useEffect } from 'react';
+import TiptapEditor from './TiptapEditor'; // direct import, not dynamic
 
 type Props = {
   content: string;
@@ -11,11 +10,17 @@ type Props = {
 };
 
 export default function DocumentEditorClient({ content, documentId, readOnly }: Props) {
+  useEffect(() => {
+    console.log('✅ DocumentEditorClient mounted with:', { documentId, readOnly });
+  }, [documentId, readOnly]);
+
   return (
-    <TiptapEditor
-      initialContent={content}
-      documentId={documentId}
-      readOnly={readOnly}
-    />
+    <div>
+      <TiptapEditor
+        initialContent={content}
+        documentId={documentId}
+        readOnly={readOnly}
+      />
+    </div>
   );
 }

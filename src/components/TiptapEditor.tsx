@@ -7,54 +7,68 @@ import { useEffect } from 'react';
 type Props = {
   initialContent: string;
   documentId: string;
-  readOnly?: boolean;
+  readOnly: boolean;
 };
 
-export default function TiptapEditor({ initialContent, documentId, readOnly = false }: Props) {
+export default function TiptapEditor({ initialContent, documentId, readOnly }: Props) {
+  console.log('TiptapEditor props:', { documentId, readOnly });
+
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialContent || '<p></p>',
     editable: !readOnly,
-    onUpdate: async ({ editor }) => {
+    editorProps: {
+      attributes: {
+        class: 'focus:outline-none prose dark:prose-invert max-w-full text-lg leading-relaxed',
+      },
+    },
+    onUpdate: ({ editor }) => {
       if (readOnly) return;
 
       const html = editor.getHTML();
-      try {
-        await fetch(`/api/documents/${documentId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({ content: html }),
-        });
-      } catch (err) {
-        console.error('Failed to save document', err);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No token found in localStorage');
+        return;
       }
+
+      if (!documentId) {
+        console.error('Missing documentId in PUT request');
+        return;
+      }
+
+      console.log('Sending PUT to:', `/api/documents/${documentId}`);
+
+      fetch(`/api/documents/${documentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: html }),
+      })
+        .then(async (res) => {
+          const text = await res.text();
+          if (!res.ok) {
+            console.error('PUT failed:', res.status, text);
+          } else {
+            console.log('PUT success:', res.status);
+          }
+        })
+        .catch(console.error);
     },
   });
 
   useEffect(() => {
-    if (editor && readOnly !== undefined) {
+    if (editor) {
       editor.setEditable(!readOnly);
+      console.log('Set editor editable:', !readOnly);
     }
   }, [readOnly, editor]);
 
   return (
-    <div className="rounded border border-gray-600 bg-[#121212] p-4 text-white">
+    <div className="bg-white dark:bg-[#1a1a1a] shadow-md rounded-lg mx-auto w-full max-w-[8.5in] min-h-[11in] p-10">
       <EditorContent editor={editor} />
-      <style jsx global>{`
-        .ProseMirror {
-          color: white !important;
-          background-color: #121212 !important;
-          min-height: 300px;
-          padding: 0.75rem;
-        }
-
-        .ProseMirror > * {
-          color: white;
-        }
-      `}</style>
     </div>
   );
 }

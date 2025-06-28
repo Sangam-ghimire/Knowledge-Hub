@@ -34,12 +34,21 @@ export async function GET(req: NextRequest) {
         ],
       },
       include: {
-        author: { select: { id: true, email: true } },
+        author: {
+          select: { id: true, email: true },
+        },
+        shares: {
+          where: { userId },
+          select: {
+            userId: true,
+            canEdit: true,
+          },
+        },
       },
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({ documents }, { status: 200 });
+    return NextResponse.json({ documents, currentUserId: userId }, { status: 200 });
   } catch (err) {
     console.error('GET /api/documents error:', err);
     return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
