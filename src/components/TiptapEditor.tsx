@@ -13,13 +13,8 @@ type Props = {
 export default function TiptapEditor({ initialContent, documentId, readOnly = false }: Props) {
   const editor = useEditor({
     extensions: [StarterKit],
-    content: initialContent || '<p></p>', // fallback
+    content: initialContent || '<p></p>',
     editable: !readOnly,
-    editorProps: {
-      attributes: {
-        class: 'editor-content',
-      },
-    },
     onUpdate: async ({ editor }) => {
       if (readOnly) return;
 
@@ -46,18 +41,18 @@ export default function TiptapEditor({ initialContent, documentId, readOnly = fa
   }, [readOnly, editor]);
 
   return (
-    <div className="rounded border border-gray-700 bg-[#1a1a1a] p-4">
+    <div className="rounded border border-gray-600 bg-[#121212] p-4 text-white">
       <EditorContent editor={editor} />
       <style jsx global>{`
-        .editor-content {
-          color: white;
-          background-color: #1a1a1a;
-          min-height: 200px;
-          outline: none;
+        .ProseMirror {
+          color: white !important;
+          background-color: #121212 !important;
+          min-height: 300px;
+          padding: 0.75rem;
         }
 
-        .editor-content p {
-          margin: 0;
+        .ProseMirror > * {
+          color: white;
         }
       `}</style>
     </div>

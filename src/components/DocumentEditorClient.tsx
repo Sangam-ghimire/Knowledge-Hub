@@ -1,14 +1,19 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { EditorProps } from '@/types/editor';
 
 const TiptapEditor = dynamic(() => import('@/components/TiptapEditor'), { ssr: false });
 
-export default function DocumentEditorClient({ initialContent, documentId, readOnly }: EditorProps) {
+type Props = {
+  content: string;
+  documentId: string;
+  readOnly: boolean;
+};
+
+export default function DocumentEditorClient({ content, documentId, readOnly }: Props) {
   return (
     <TiptapEditor
-      initialContent={initialContent}
+      initialContent={content}
       documentId={documentId}
       readOnly={readOnly}
     />
