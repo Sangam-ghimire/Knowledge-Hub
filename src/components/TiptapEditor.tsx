@@ -2,7 +2,8 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import debounce from 'lodash.debounce';
 
 type Props = {
   initialContent: string;
@@ -11,7 +12,43 @@ type Props = {
 };
 
 export default function TiptapEditor({ initialContent, documentId, readOnly }: Props) {
-  console.log('TiptapEditor props:', { documentId, readOnly });
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  // ✅ Debounced auto-save using new API route that uses HttpOnly cookies
+  const autoSave = useCallback(
+    debounce(async (html: string) => {
+      if (!documentId) {
+        console.error('Missing documentId');
+        setSaveStatus('error');
+        return;
+      }
+
+      setSaveStatus('saving');
+
+      try {
+        const res = await fetch(`/api/documents/${documentId}/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: html }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Auto-save failed:', res.status, text);
+          setSaveStatus('error');
+        } else {
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 1500);
+        }
+      } catch (err) {
+        console.error('Auto-save error:', err);
+        setSaveStatus('error');
+      }
+    }, 1000),
+    [documentId]
+  );
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -19,62 +56,35 @@ export default function TiptapEditor({ initialContent, documentId, readOnly }: P
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: 'focus:outline-none prose dark:prose-invert max-w-full text-lg leading-relaxed',
+        class:
+          'focus:outline-none prose dark:prose-invert max-w-full text-lg leading-relaxed',
       },
     },
     onUpdate: ({ editor }) => {
-      if (readOnly) return;
-
-      const html = editor.getHTML();
-
-      //  Read token from cookies
-      const token = document.cookie
-        .split('; ')
-        .find((c) => c.startsWith('token='))
-        ?.split('=')[1];
-
-      if (!token) {
-        console.warn('No token found in cookies');
-        return;
+      if (!readOnly) {
+        const html = editor.getHTML();
+        autoSave(html);
       }
-
-      if (!documentId) {
-        console.error('Missing documentId in PUT request');
-        return;
-      }
-
-      console.log('Sending PUT to:', `/api/documents/${documentId}`);
-
-      fetch(`/api/documents/${documentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, //  Corrected source of token
-        },
-        body: JSON.stringify({ content: html }),
-      })
-        .then(async (res) => {
-          const text = await res.text();
-          if (!res.ok) {
-            console.error('PUT failed:', res.status, text);
-          } else {
-            console.log('PUT success:', res.status);
-          }
-        })
-        .catch(console.error);
     },
   });
 
   useEffect(() => {
     if (editor) {
       editor.setEditable(!readOnly);
-      console.log('Set editor editable:', !readOnly);
     }
   }, [readOnly, editor]);
 
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] shadow-md rounded-lg mx-auto w-full max-w-[8.5in] min-h-[11in] p-10">
-      <EditorContent editor={editor} />
+    <div className="relative">
+      <div className="absolute top-[-2rem] right-0 text-sm text-gray-400">
+        {saveStatus === 'saving' && 'Saving...'}
+        {saveStatus === 'saved' && 'Saved ✓'}
+        {saveStatus === 'error' && 'Failed ✗'}
+      </div>
+
+      <div className="bg-white dark:bg-[#1a1a1a] shadow-md rounded-lg mx-auto w-full max-w-[8.5in] min-h-[11in] p-10">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }
