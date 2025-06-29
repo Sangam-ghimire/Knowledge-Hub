@@ -26,9 +26,15 @@ export default function TiptapEditor({ initialContent, documentId, readOnly }: P
       if (readOnly) return;
 
       const html = editor.getHTML();
-      const token = localStorage.getItem('token');
+
+      //  Read token from cookies
+      const token = document.cookie
+        .split('; ')
+        .find((c) => c.startsWith('token='))
+        ?.split('=')[1];
+
       if (!token) {
-        console.warn('No token found in localStorage');
+        console.warn('No token found in cookies');
         return;
       }
 
@@ -43,7 +49,7 @@ export default function TiptapEditor({ initialContent, documentId, readOnly }: P
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, //  Corrected source of token
         },
         body: JSON.stringify({ content: html }),
       })
