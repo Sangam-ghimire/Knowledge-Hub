@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import debounce from 'lodash.debounce';
 
 type Props = {
@@ -14,9 +14,8 @@ type Props = {
 export default function TiptapEditor({ initialContent, documentId, readOnly }: Props) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  // ✅ Debounced auto-save using new API route that uses HttpOnly cookies
-  const autoSave = useCallback(
-    debounce(async (html: string) => {
+  const autoSave = useMemo(() => {
+    return debounce(async (html: string) => {
       if (!documentId) {
         console.error('Missing documentId');
         setSaveStatus('error');
@@ -46,9 +45,8 @@ export default function TiptapEditor({ initialContent, documentId, readOnly }: P
         console.error('Auto-save error:', err);
         setSaveStatus('error');
       }
-    }, 1000),
-    [documentId]
-  );
+    }, 1000);
+  }, [documentId]);
 
   const editor = useEditor({
     extensions: [StarterKit],
