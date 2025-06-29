@@ -5,23 +5,23 @@ import { verifyAuthToken } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value;
+    console.log('[API] Token from cookies:', token);
 
     if (!token) {
-      console.warn('No token found in cookies');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { valid, decoded } = verifyAuthToken(token);
-    if (!valid || !decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
-      console.warn('Invalid token or missing userId in decoded payload:', decoded);
+    const { valid, decoded, error } = verifyAuthToken(token);
+    console.log('[API] Token verification result:', { valid, decoded, error });
+
+    if (!valid || !decoded || typeof decoded.userId !== 'string') {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const userId = decoded.userId as string;
+    const userId = decoded.userId;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      console.warn('No user found for userId:', userId);
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
@@ -34,15 +34,10 @@ export async function GET(req: NextRequest) {
         ],
       },
       include: {
-        author: {
-          select: { id: true, email: true },
-        },
+        author: { select: { id: true, email: true } },
         shares: {
           where: { userId },
-          select: {
-            userId: true,
-            canEdit: true,
-          },
+          select: { userId: true, canEdit: true },
         },
       },
       orderBy: { updatedAt: 'desc' },

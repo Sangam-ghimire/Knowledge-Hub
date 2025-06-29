@@ -1,8 +1,8 @@
-// src/app/api/auth/login/route.ts
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { signAuthToken } from '@/lib/auth';
+import { serialize } from 'cookie';
 
 const prisma = new PrismaClient();
 
@@ -33,7 +33,13 @@ export async function POST(req: NextRequest) {
 
     response.headers.set(
       'Set-Cookie',
-      `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`
+      serialize('token', token, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        secure: process.env.NODE_ENV === 'production',
+      })
     );
 
     return response;

@@ -3,14 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-type Document = {
-  id: string;
-  title: string;
-  updatedAt: string;
-  author: { email: string };
-  isPublic: boolean;
-};
+import { Document } from '@/types/document';
 
 export default function MyDocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -24,36 +17,33 @@ export default function MyDocumentsPage() {
     const fetchDocuments = async () => {
       try {
         const res = await fetch('/api/documents', {
-          credentials: 'include',
+          credentials: 'include', // ✅ Required to send cookies
           signal: controller.signal,
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch documents: ${res.status}`);
+          throw new Error(`Unauthorized`);
         }
 
         const data = await res.json();
         setDocuments(data.documents || []);
-      } catch (err: unknown) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Document fetch error:', err);
-        setError('You are not authorized. Redirecting...');
-        setTimeout(() => router.replace('/login'), 1500);
-      }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Document fetch error:', err);
+          setError('You are not authorized. Redirecting...');
+          setTimeout(() => router.replace('/login'), 1500);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocuments();
-
-    return () => {
-      controller.abort(); // clean up if component unmounts
-    };
+    return () => controller.abort();
   }, [router]);
 
   if (loading) {
-    return <p className="p-6 text-gray-500">Loading your documents...</p>;
+    return <p className="p-6 text-gray-400">Loading your documents...</p>;
   }
 
   if (error) {
@@ -62,7 +52,6 @@ export default function MyDocumentsPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6">
-      {/* Heading + Add Button */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">📚 My Documents</h1>
         <Link
@@ -73,20 +62,13 @@ export default function MyDocumentsPage() {
         </Link>
       </div>
 
-      {/* Document List */}
       {documents.length === 0 ? (
         <p className="text-gray-600">You haven’t created or received any documents yet.</p>
       ) : (
         <ul className="space-y-4">
           {documents.map((doc) => (
-            <li
-              key={doc.id}
-              className="border p-4 rounded shadow hover:shadow-md transition"
-            >
-              <Link
-                href={`/documents/${doc.id}`}
-                className="text-lg font-semibold hover:underline"
-              >
+            <li key={doc.id} className="border p-4 rounded shadow hover:shadow-md transition">
+              <Link href={`/documents/${doc.id}`} className="text-lg font-semibold hover:underline">
                 {doc.title}
               </Link>
               <div className="text-sm text-gray-500 mt-1">

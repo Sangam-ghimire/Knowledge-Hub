@@ -1,18 +1,22 @@
+// src/app/api/auth/me/route.ts
 import { NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET() {
+  const token = await cookies().get('token')?.value;
+
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized: No token' }, { status: 401 });
   }
 
-  const token = authHeader.split(' ')[1];
   const { valid, decoded } = verifyAuthToken(token);
+
   if (!valid || !decoded) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const { email } = decoded as { email: string };
-  return NextResponse.json({ email });
+  const { email, userId } = decoded as { email: string; userId: string };
+
+  return NextResponse.json({ userId, email }, { status: 200 });
 }
