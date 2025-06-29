@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import type { FetchedDocumentData } from '@/types/document';
 import DocumentEditorClient from '@/components/DocumentEditorClient';
+import MentionSidebar from '@/components/MentionSidebar';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,6 @@ export default async function DocumentPage({ params }: { params: { id: string } 
     (s) => s.userId === currentUserId && s.canEdit
   );
   const canEdit = Boolean(isAuthor || isSharedEditable || document.isPublic);
-//   const isPublic =document.isPublic;
 
   console.log({
     currentUserId,
@@ -70,12 +70,17 @@ export default async function DocumentPage({ params }: { params: { id: string } 
         </p>
       </div>
 
-      <div className="bg-[#1a1a1a] shadow-md w-full max-w-screen-md p-10 rounded-lg">
-        <DocumentEditorClient
-          content={document.content}
-          documentId={document.id}
-          readOnly={!canEdit}
-        />
+      {/* Editor and Sidebar side by side */}
+      <div className="flex w-full max-w-screen-xl gap-6">
+        <div className="flex-1 bg-[#1a1a1a] shadow-md p-10 rounded-lg">
+          <DocumentEditorClient
+            content={document.content}
+            documentId={document.id}
+            readOnly={!canEdit}
+          />
+        </div>
+
+        <MentionSidebar documentId={document.id} />
       </div>
     </main>
   );

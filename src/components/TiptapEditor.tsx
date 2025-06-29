@@ -54,8 +54,7 @@ export default function TiptapEditor({ initialContent, documentId, readOnly }: P
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class:
-          'focus:outline-none prose dark:prose-invert max-w-full text-lg leading-relaxed',
+        class: 'focus:outline-none prose dark:prose-invert max-w-full text-lg leading-relaxed',
       },
     },
     onUpdate: ({ editor }) => {
