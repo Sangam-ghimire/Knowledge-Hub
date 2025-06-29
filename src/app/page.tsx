@@ -3,48 +3,46 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState('');
+export default function LandingPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
-
-    fetch('/api/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.email) setUserEmail(data.email);
-      });
+    setIsAuthenticated(!!token);
   }, []);
 
   return (
-    <main className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Welcome {userEmail ? userEmail : '👋'}</h1>
-      <p className="text-gray-600 mb-8">
-        This is your Knowledge Hub. Create, collaborate, and organize documents with your team.
-      </p>
+    <main className="min-h-screen bg-black text-white flex flex-col justify-center items-center px-6 py-20">
+      {/* Hero Section */}
+      <div className="text-center max-w-3xl">
+        <h1 className="text-5xl font-bold mb-4">📄 Create. Share. Collaborate.</h1>
+        <p className="text-zinc-400 text-lg mb-8">
+          Welcome to your minimal document collaboration tool. Quickly draft, edit, and share documents with your team or the world.
+        </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <Link
-          href="/documents/new"
-          className="bg-blue-600 text-white p-4 rounded-xl shadow hover:bg-blue-700 transition"
-        >
-          📄 Create New Document
-        </Link>
-        <Link
-          href="/documents"
-          className="bg-gray-100 p-4 rounded-xl shadow hover:bg-gray-200 transition"
-        >
-          📚 View My Documents
-        </Link>
-      </div>
-
-      <div className="mt-10 border-t pt-6 text-sm text-gray-500">
-        💡 Tip: Mention teammates with <code>@username</code> to auto-share documents.
+        {!isAuthenticated ? (
+          <div className="space-x-4">
+            <Link
+              href="/login"
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/register"
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
+            >
+              Register
+            </Link>
+          </div>
+        ) : (
+          <Link
+            href="/documents"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Go to My Documents
+          </Link>
+        )}
       </div>
     </main>
   );
