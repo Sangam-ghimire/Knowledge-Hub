@@ -69,6 +69,14 @@ export default function LoginPage() {
               placeholder="••••••••"
               autoComplete="current-password"
             />
+            <div className="text-right mt-1">
+              <a
+                href="/forgot-password"
+                className="text-xs text-blue-400 hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div>
           </div>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
