@@ -17,18 +17,18 @@ export default function MyDocumentsPage() {
     const fetchDocuments = async () => {
       try {
         const res = await fetch('/api/documents', {
-          credentials: 'include', // ✅ Required to send cookies
+          credentials: 'include',
           signal: controller.signal,
         });
 
         if (!res.ok) {
-          throw new Error(`Unauthorized`);
+          throw new Error('Unauthorized');
         }
 
         const data = await res.json();
         setDocuments(data.documents || []);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Document fetch error:', err);
           setError('You are not authorized. Redirecting...');
           setTimeout(() => router.replace('/login'), 1500);

@@ -20,10 +20,21 @@ export function verifyAuthToken(token: string): {
   error?: string;
 } {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
-    return { valid: true, decoded };
-  } catch (err: any) {
-    console.error('JWT verification failed:', err.message);
-    return { valid: false, decoded: null, error: err.message };
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (
+      typeof decoded === 'object' &&
+      decoded !== null &&
+      'userId' in decoded &&
+      typeof (decoded as Record<string, unknown>).userId === 'string'
+    ) {
+      return { valid: true, decoded: decoded as AuthTokenPayload };
+    }
+
+    return { valid: false, decoded: null, error: 'Malformed token payload' };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('JWT verification failed:', message);
+    return { valid: false, decoded: null, error: message };
   }
 }

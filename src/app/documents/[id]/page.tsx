@@ -6,7 +6,7 @@ import DocumentEditorClient from '@/components/DocumentEditorClient';
 export const dynamic = 'force-dynamic';
 
 export default async function DocumentPage({ params }: { params: { id: string } }) {
-  const cookieStore = await cookies(); // No await needed
+  const cookieStore = await cookies();
   const tokenValue = cookieStore.get('token');
 
   if (!tokenValue?.value) {
@@ -33,7 +33,7 @@ export default async function DocumentPage({ params }: { params: { id: string } 
   try {
     data = await res.json();
   } catch (err) {
-    console.error('Failed to parse JSON', err);
+    console.error('Failed to parse JSON:', err);
     return notFound();
   }
 
@@ -48,8 +48,8 @@ export default async function DocumentPage({ params }: { params: { id: string } 
   const isSharedEditable = document.shares?.some(
     (s) => s.userId === currentUserId && s.canEdit
   );
-  const isPublic = document.isPublic;
-  const canEdit = Boolean(isAuthor || isSharedEditable || isPublic);
+  const canEdit = Boolean(isAuthor || isSharedEditable || document.isPublic);
+//   const isPublic =document.isPublic;
 
   console.log({
     currentUserId,
